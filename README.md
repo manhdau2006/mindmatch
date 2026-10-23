@@ -1,20 +1,20 @@
-Công nghệ sử dụng
+ Công nghệ sử dụng
 
-- Frontend: [React](https://react.dev/) + [Vite](https://vitejs.dev/)
-- Styling: [Tailwind CSS](https://tailwindcss.com/) + [Lucide React](https://lucide.dev/) (Icons)
-- Routing: [React Router v6](https://reactrouter.com/)
-- Backend as a Service (BaaS): [Firebase](https://firebase.google.com/)
-  + Firebase Authentication: Quản lý đăng ký, đăng nhập và phân quyền (Mentor / Mentee).
-  + Cloud Firestore: Lưu trữ thông tin người dùng, hồ sơ, dữ liệu matching và lịch hẹn (sessions).
-  + irebase Realtime Database:Quản lý luồng tin nhắn và trạng thái trực tuyến tức thì.
+- **Frontend:** [React](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/) + [Lucide React](https://lucide.dev/) (Icons)
+- **Routing:** [React Router v6](https://reactrouter.com/)
+- **Backend as a Service (BaaS):** [Firebase](https://firebase.google.com/)
+  - **Firebase Authentication:** Quản lý đăng ký, đăng nhập và phân quyền (Mentor / Mentee).
+  - **Cloud Firestore:** Lưu trữ thông tin người dùng, hồ sơ, dữ liệu matching và lịch hẹn (sessions).
+  - **Firebase Realtime Database:** Quản lý luồng tin nhắn và trạng thái trực tuyến tức thì.
 
 ---
 
-Cấu trúc thư mục
---> để mn hiểu mấy file này có nhiệm vụ gì chứ hôm sau chắc xoá chú thích ni
+## Cấu trúc thư mục
 
+```text
 mindmatch/
-├── .env.example         (    # Mẫu khai báo các biến môi trường (API keys, config Firebase,...) 
+├── .env.example             # Mẫu khai báo các biến môi trường (API keys, config Firebase,...)
 ├── .gitignore               # Khai báo các file/thư mục không đưa lên Git (node_modules, .env, dist,...)
 ├── README.md                # Tài liệu hướng dẫn cài đặt, chạy dự án và giới thiệu hệ thống
 ├── index.html               # File HTML gốc (entry point) để gắn React app vào DOM
@@ -22,11 +22,11 @@ mindmatch/
 ├── package-lock.json        # Khóa phiên bản chính xác của các thư viện và cây phụ thuộc
 ├── postcss.config.js        # Cấu hình PostCSS để xử lý tiền/hậu kỳ CSS (hỗ trợ Tailwind CSS)
 ├── tailwind.config.js       # Cấu hình hệ thống thiết kế của Tailwind CSS (theme, màu sắc, font,...)
-├── vite.config.js           # Cấu hình công cụ đóng gói và máy chủ phát triển Vite (plugins, aliases,...).     ) 
+├── vite.config.js           # Cấu hình công cụ đóng gói và máy chủ phát triển Vite (plugins, aliases,...)
 └── src/                     # Thư mục chứa toàn bộ mã nguồn chính của ứng dụng React
     ├── App.jsx              # Component gốc, thường quản lý điều hướng (routing) và layout chung
     ├── index.css            # File CSS chính, nạp Tailwind directives (@tailwind) và style toàn cục
-    ├── main.jsx             # File khởi tạo React, render <App /> vào thẻ root trong index.html.      
+    ├── main.jsx             # File khởi tạo React, render <App /> vào thẻ root trong index.html
     │
     ├── components/          # Thư mục chứa các UI component tái sử dụng trong toàn bộ dự án
     │   └── PagePlaceholder.jsx   # Giao diện khung chờ (skeleton/placeholder) khi trang chưa tải xong hoặc đang phát triển
@@ -55,4 +55,3 @@ mindmatch/
         ├── Resources.jsx         # Kho tài liệu, tài nguyên học tập và tham khảo
         ├── Sessions.jsx          # Quản lý các buổi hẹn, phiên cố vấn (lịch hẹn sắp tới, lịch sử gặp)
         └── Settings.jsx          # Thiết lập cấu hình tài khoản cá nhân và tùy chọn hệ thống
-```[cite: 1]
