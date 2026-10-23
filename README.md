@@ -10,7 +10,8 @@
 
 ---
 
-## Cấu trúc thư mục
+ Cấu trúc thư mục.  
+ --> phần này giữ lại ghi chú cho mn hiểu nhiệm vụ các file chứ hôm sau xoá chú thích sau ha
 
 ```text
 mindmatch/
