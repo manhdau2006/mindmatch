@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 // Import đồng loạt 16 trang từ thư mục src/pages
+import BottomNav from './components/BottomNavigation';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import EmailVerification from './pages/EmailVerification';
@@ -22,7 +23,7 @@ import Dashboard from './pages/Dashboard';
 import Matcher from './pages/Matcher';
 import MyMentees from './pages/MyMentees';
 import Sessions from './pages/Sessions';
-import Messages from './pages/Messages';
+import Messages from './pages/Messages/Messages';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import Resources from './pages/Resources';
@@ -113,11 +114,10 @@ function QuickNavWidget() {
                   key={route.path}
                   to={route.path}
                   onClick={() => setIsOpen(false)}
-                  className={`flex items-center justify-between p-2.5 rounded-xl text-xs transition-colors ${
-                    isActive
-                      ? 'bg-indigo-50 text-indigo-900 font-semibold border border-indigo-100'
-                      : 'text-slate-700 hover:bg-slate-50 hover:text-indigo-600'
-                  }`}
+                  className={`flex items-center justify-between p-2.5 rounded-xl text-xs transition-colors ${isActive
+                    ? 'bg-indigo-50 text-indigo-900 font-semibold border border-indigo-100'
+                    : 'text-slate-700 hover:bg-slate-50 hover:text-indigo-600'
+                    }`}
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className="font-medium flex items-center gap-1.5">
@@ -171,11 +171,11 @@ export default function App() {
         <Route path="/resources" element={<Resources />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<Help />} />
-        
+
         {/* Route fallback cho các đường dẫn không hợp lệ */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-
+      <BottomNav />
       {/* Thanh Quick Navigation hỗ trợ developer test nhanh các trang */}
       <QuickNavWidget />
     </>
