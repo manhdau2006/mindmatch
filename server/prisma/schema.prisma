@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  student
+  tutor
+  admin
+}
+
+enum ConversationStatus {
+  active
+  closed
+}
+
+enum MessageType {
+  text
+  image
+  system
+}
+
+// Bảng users tối giản để chat chạy được — phần Xác thực (Nguyên) bổ sung thêm cột.
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  role         Role      @default(student)
+  avatar       String?
+  isBanned     Boolean   @default(false)
+  lastActiveAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  studentConversations Conversation[] @relation("StudentConversations")
+  tutorConversations   Conversation[] @relation("TutorConversations")
+  messages             Message[]
+
+  @@map("users")
+}
+
+model Conversation {
+  id        Int                @id @default(autoincrement())
+  studentId Int
+  tutorId   Int
+  status    ConversationStatus @default(active)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  student  User      @relation("StudentConversations", fields: [studentId], references: [id])
+  tutor    User      @relation("TutorConversations", fields: [tutorId], references: [id])
+  messages Message[]
+
+  @@unique([studentId, tutorId])
+  @@index([tutorId])
+  @@map("conversations")
+}
+
+model Message {
+  id             Int         @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  content        String
+  messageType    MessageType @default(text)
+  isRead         Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, id])
+  @@map("messages")
+}

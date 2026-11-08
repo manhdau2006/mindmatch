@@ -1,156 +1,238 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Send } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Send, AlertCircle, RotateCw } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import './Messages.css';
+import { formatChatTime, formatMessageTime } from '../../lib/chatApi';
+import useChat from './useChat';
 
-// Mock data
-const MOCK_CONVERSATIONS = [
-  {
-    id: 1,
-    name: 'Thầy Hoàng Tuấn',
-    role: 'Gia sư Toán cao cấp',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces',
-    lastMessage: 'Hẹn em 19h tối mai học qua Zoom nhé!',
-    time: '14:20',
-    unreadCount: 2,
-    isOnline: true,
-  },
-  {
-    id: 2,
-    name: 'Cô Mai Linh',
-    role: 'Gia sư Tiếng Anh (IELTS)',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces',
-    lastMessage: 'Bài tập Writing Task 2 cô đã sửa xong rồi nha.',
-    time: 'Hôm qua',
-    unreadCount: 0,
-    isOnline: false,
-  },
-  {
-    id: 3,
-    name: 'Anh Minh Đức',
-    role: 'Gia sư Lập trình Python',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces',
-    lastMessage: 'Em nhớ cài sẵn thư viện numpy với pandas.',
-    time: '2 ngày trước',
-    unreadCount: 0,
-    isOnline: true,
-  },
-];
+const DEV_DEFAULT_USER_ID = 1;
 
-const MOCK_MESSAGES = [
-  { id: 1, conversationId: 1, senderId: 2, text: 'Chào em, tối mai 19h học được không?', time: '14:15' },
-  { id: 2, conversationId: 1, senderId: 'me', text: 'Dạ được ạ, em chuẩn bị sẵn bài tập rồi thầy.', time: '14:18' },
-  { id: 3, conversationId: 1, senderId: 2, text: 'Hẹn em 19h tối mai học qua Zoom nhé!', time: '14:20' },
+function Avatar({ user, size = 48 }) {
+  const [broken, setBroken] = useState(false);
+  if (user.avatar && !broken) {
+    return (
+      <img
+        src={user.avatar}
+        alt={user.name}
+        className="avatar-img"
+        style={{ width: size, height: size }}
+        onError={() => setBroken(true)}
+      />
+    );
+  }
+  return (
+    <div className="avatar-img avatar-fallback" style={{ width: size, height: size }}>
+      {(user.name || '?').trim().charAt(0).toUpperCase()}
+    </div>
+  );
+}
 
-  { id: 4, conversationId: 2, senderId: 'me', text: 'Cô ơi cô xem bài luận giúp em chưa ạ?', time: 'Hôm qua' },
-  { id: 5, conversationId: 2, senderId: 2, text: 'Bài tập Writing Task 2 cô đã sửa xong rồi nha.', time: 'Hôm qua' },
-];
-//End Mock data
+function partnerStatusText(partner) {
+  if (partner.isOnline) return 'Đang hoạt động';
+  if (partner.lastActiveAt) return `Hoạt động ${formatChatTime(partner.lastActiveAt)}`;
+  return 'Không trực tuyến';
+}
 
 export default function Messages() {
-  const [selectedId, setSelectedId] = useState(null);
+  const location = useLocation();
 
-  const activeChat = MOCK_CONVERSATIONS.find((c) => c.id === selectedId);
+  // TODO: khi phần Đăng nhập xong, lấy id + token của user đăng nhập thay cho ?as=
+  const myId = Number(new URLSearchParams(location.search).get('as')) || DEV_DEFAULT_USER_ID;
+  const auth = useMemo(() => ({ userId: myId }), [myId]);
 
-  const chatMessages = MOCK_MESSAGES.filter((m) => m.conversationId === selectedId);
+  const {
+    conversations,
+    messages,
+    activeConversation,
+    isPartnerTyping,
+    selectedId,
+    status,
+    error,
+    loadingList,
+    openConversation,
+    sendMessage,
+    retryMessage,
+    setTyping,
+    dismissError,
+  } = useChat(auth);
+
+  const [inputMessage, setInputMessage] = useState('');
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages?.length, isPartnerTyping, selectedId]);
+
+  const isClosed = activeConversation?.status === 'closed';
+
+  // Tin cuối của mình đã được đọc -> hiện "Đã xem"
+  const lastSeenId = useMemo(() => {
+    const mine = (messages || []).filter((m) => m.senderId === myId && !m.status);
+    const last = mine[mine.length - 1];
+    return last?.isRead ? last.id : null;
+  }, [messages, myId]);
+
+  const handleSendMessage = () => {
+    if (!inputMessage.trim() || isClosed) return;
+    sendMessage(inputMessage);
+    setInputMessage('');
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e) => {
+    // isComposing: bộ gõ tiếng Việt đang ghép dấu, Enter lúc này không phải là gửi
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   return (
     <div className="chat-container">
-      {/*Conversation bar*/}
       <div className={`chat-sidebar ${selectedId ? 'mobile-hidden' : ''}`}>
-        <div className="chat-sidebar-header">Đoạn chat</div>
+        <div className="chat-sidebar-header">
+          <span>Đoạn chat</span>
+          {status !== 'connected' && (
+            <span className={`connection-pill ${status}`}>
+              {status === 'error' ? 'Mất kết nối' : 'Đang kết nối...'}
+            </span>
+          )}
+        </div>
 
         <div className="conversation-list">
-          {MOCK_CONVERSATIONS.map((conv) => (
+          {loadingList && <p className="chat-empty-text">Đang tải...</p>}
+          {!loadingList && conversations.length === 0 && (
+            <p className="chat-empty-text">
+              Chưa có cuộc trò chuyện nào. Khi bạn và gia sư Match thành công, đoạn chat sẽ xuất hiện ở đây.
+            </p>
+          )}
+
+          {conversations.map((conv) => (
             <div
               key={conv.id}
-              onClick={() => setSelectedId(conv.id)}
+              onClick={() => openConversation(conv.id)}
               className={`conversation-item ${selectedId === conv.id ? 'active' : ''}`}
             >
               <div className="avatar-box">
-                <img src={conv.avatar} alt={conv.name} className="avatar-img" />
-                {conv.isOnline && <span className="online-dot"></span>}
+                <Avatar user={conv.partner} />
+                {conv.partner.isOnline && <span className="online-dot"></span>}
               </div>
 
               <div className="conversation-info">
                 <div className="conversation-top">
-                  <span className="user-name">{conv.name}</span>
-                  <span className="chat-time">{conv.time}</span>
+                  <span className="user-name">{conv.partner.name}</span>
+                  <span className="chat-time">{formatChatTime(conv.lastMessage?.createdAt)}</span>
                 </div>
-                <p className="last-message">{conv.lastMessage}</p>
+                <p className={`last-message ${conv.unreadCount > 0 ? 'unread' : ''}`}>
+                  {conv.lastMessage
+                    ? `${conv.lastMessage.senderId === myId ? 'Bạn: ' : ''}${conv.lastMessage.content}`
+                    : 'Hãy gửi lời chào đầu tiên 👋'}
+                </p>
               </div>
 
-              {conv.unreadCount > 0 && (
-                <span className="unread-badge">{conv.unreadCount}</span>
-              )}
+              {conv.unreadCount > 0 && <span className="unread-badge">{conv.unreadCount}</span>}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Conversation in details */}
       <div className={`chat-main ${!selectedId ? 'mobile-hidden' : ''}`}>
-        {activeChat ? (
+        {activeConversation ? (
           <>
-            {/* Header chat */}
             <div className="chat-header">
               <div className="chat-header-user">
-                {/* Buttonback */}
-                <button className="btn-back" onClick={() => setSelectedId(null)}>
+                <button className="btn-back" onClick={() => openConversation(null)} aria-label="Quay lại">
                   <ArrowLeft size={20} />
                 </button>
-                <img src={activeChat.avatar} alt={activeChat.name} className="avatar-img" />
+                <Avatar user={activeConversation.partner} size={40} />
                 <div>
-                  <div className="chat-header-name">{activeChat.name}</div>
-                  <div className="chat-header-status">
-                    {activeChat.isOnline ? 'Đang hoạt động' : 'Không trực tuyến'}
+                  <div className="chat-header-name">{activeConversation.partner.name}</div>
+                  <div className={`chat-header-status ${activeConversation.partner.isOnline ? 'online' : ''}`}>
+                    {partnerStatusText(activeConversation.partner)}
                   </div>
                 </div>
               </div>
 
-              {/* Report button */}
+              {/* TODO: modal gửi Report */}
               <button
-                onClick={() => alert(`Mở modal báo cáo người dùng: ${activeChat.name}`)}
+                onClick={() => alert(`Mở modal báo cáo người dùng: ${activeConversation.partner.name}`)}
                 className="text-xs text-red-500 hover:underline border border-red-200 px-2 py-1 rounded"
               >
                 Báo cáo
               </button>
             </div>
 
-            {/* Messages */}
+            {error && (
+              <div className="chat-error-banner" onClick={dismissError}>
+                <AlertCircle size={14} /> {error}
+              </div>
+            )}
+
             <div className="chat-messages-body">
-              {chatMessages.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 mt-6">
-                  Chưa có tin nhắn nào. Hãy gửi lời chào đầu tiên!
-                </p>
+              {!messages ? (
+                <p className="chat-empty-text">Đang tải tin nhắn...</p>
+              ) : messages.length === 0 ? (
+                <p className="chat-empty-text">Chưa có tin nhắn nào. Hãy gửi lời chào đầu tiên!</p>
               ) : (
-                chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`message-row ${msg.senderId === 'me' ? 'me' : 'other'}`}
-                  >
-                    <div className="message-bubble">
-                      <div>{msg.text}</div>
-                      <span className="message-time-text">{msg.time}</span>
+                messages.map((msg) => {
+                  const mine = msg.senderId === myId;
+                  return (
+                    <div key={msg.id} className={`message-row ${mine ? 'me' : 'other'}`}>
+                      <div className={`message-bubble ${msg.status || ''}`}>
+                        <div className="message-content">{msg.content}</div>
+                        <span className="message-time-text">
+                          {msg.status === 'sending' ? 'Đang gửi...' : formatMessageTime(msg.createdAt)}
+                        </span>
+                      </div>
+                      {msg.status === 'failed' && (
+                        <button className="message-retry" onClick={() => retryMessage(msg)}>
+                          <RotateCw size={12} /> Gửi lỗi, thử lại
+                        </button>
+                      )}
+                      {msg.id === lastSeenId && <span className="message-seen">Đã xem</span>}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
+              {isPartnerTyping && (
+                <div className="message-row other">
+                  <div className="message-bubble typing-bubble">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef} />
             </div>
 
-            {/*Where to send message*/}
             <div className="chat-footer">
               <input
+                ref={inputRef}
                 type="text"
-                placeholder="Nhập tin nhắn..."
+                placeholder={isClosed ? 'Cuộc trò chuyện đã đóng' : 'Nhập tin nhắn...'}
                 className="chat-input"
+                value={inputMessage}
+                maxLength={2000}
+                disabled={isClosed}
+                onChange={(e) => {
+                  setInputMessage(e.target.value);
+                  setTyping(e.target.value.length > 0);
+                }}
+                onKeyDown={handleKeyDown}
               />
-              <button className="btn-send">
+              <button
+                className="btn-send"
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isClosed}
+                aria-label="Gửi"
+              >
                 <Send size={16} />
               </button>
             </div>
           </>
         ) : (
-          /* For desktop: Khi chưa chọn ai */
           <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
             Chọn một cuộc hội thoại từ danh sách bên trái để bắt đầu chat
           </div>
