@@ -1,0 +1,24 @@
+stateDiagram-v2
+    [*] --> pending_tutor: student.request [active Match, valid availability, free recurring schedule]
+    pending_tutor --> confirmed: tutor.pay_success [assigned tutor, hold active, recurrence rechecked]
+    pending_tutor --> pending_tutor: tutor.pay_failed / record failed attempt
+    pending_tutor --> rejected: tutor.reject [assigned tutor, hold active] / cancel pending fee
+    pending_tutor --> expired: clock.tick or list.read [now >= expiresAt] / cancel pending fee
+    confirmed --> confirmed: repeated successful payment / return confirmed result
+    rejected --> [*]
+    expired --> [*]
+
+    note right of pending_tutor
+        One recurring class per Booking
+        Weekdays + hours + effective date range
+        Hold up to REQUEST_HOLD_HOURS (default 24h)
+        Deadline capped at first lesson
+        Sorted student and tutor row locks
+    end note
+
+    note right of confirmed
+        Tutor pays one acceptance fee for the class
+        One unique Transaction per Booking
+        Tuition agreed and paid outside MindMatch
+        PaymentEvent deduplicates each attempt
+    end note

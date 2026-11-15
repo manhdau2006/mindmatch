@@ -1,3 +1,7 @@
+# MindMatch
+
+Phần Đặt lịch & Thanh toán do Công phụ trách có hướng dẫn chạy PowerShell, demo, thiết kế dữ liệu và kết quả kiểm thử trong [README_CONG.md](README_CONG.md).
+
  Công nghệ sử dụng
 
 - **Frontend:** [React](https://react.dev/) + [Vite](https://vitejs.dev/)

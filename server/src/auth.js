@@ -1,13 +1,18 @@
 import { getUser, toId } from './store.js';
+import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { prisma } from './db.js';
 
 // dev: client gửi thẳng userId (header `x-user-id` / socket auth `{ userId }`) để test.
-// token: bắt buộc gửi token đăng nhập -> cần cài verifyToken() khi phần Đăng nhập xong.
+// token: xác minh Firebase ID token và tra ánh xạ User.firebaseUid.
 export const AUTH_MODE = process.env.AUTH_MODE || 'dev';
 
 async function verifyToken(token) {
-  // TODO: giải mã JWT của phần Đăng nhập, vd: return jwt.verify(token, process.env.JWT_SECRET).sub;
-  void token;
-  throw new Error('Chưa cài đặt xác thực token');
+  if (!getApps().length) initializeApp({ credential: applicationDefault(), projectId: process.env.FIREBASE_PROJECT_ID });
+  const decoded = await getAuth().verifyIdToken(token, true);
+  const mapped = await prisma.user.findUnique({ where: { firebaseUid: decoded.uid } });
+  if (!mapped) throw new AuthError('Firebase UID chưa được ánh xạ sang User của backend', 403);
+  return mapped.id;
 }
 
 class AuthError extends Error {
@@ -19,7 +24,7 @@ class AuthError extends Error {
 
 async function resolveUser({ token, devUserId }) {
   let rawId;
-  if (AUTH_MODE === 'token' || !devUserId) {
+  if (AUTH_MODE !== 'dev' || process.env.NODE_ENV === 'production' || !devUserId) {
     if (!token) throw new AuthError('Chưa đăng nhập');
     rawId = await verifyToken(token);
   } else {

@@ -29,9 +29,11 @@ import Profile from './pages/Profile';
 import Resources from './pages/Resources';
 import Settings from './pages/Settings';
 import Help from './pages/Help';
+import BookingPayment from './pages/BookingPayment';
 
 // Danh mục định tuyến hệ thống để test nhanh
 const APP_ROUTES = [
+  { path: '/bookings', label: 'Booking & Payment', name: 'Đặt lịch & thanh toán', group: 'Core' },
   { path: '/', label: 'Landing Page', name: 'Trang chủ giới thiệu', group: 'Public' },
   { path: '/login', label: 'Login / Register', name: 'Đăng nhập & Đăng ký', group: 'Auth' },
   { path: '/verify-email', label: 'Email Verification', name: 'Xác thực Email', group: 'Auth' },
@@ -155,6 +157,7 @@ export default function App() {
     <>
       {/* Định tuyến tập trung toàn bộ 16 trang của hệ thống Mindmatch */}
       <Routes>
+        <Route path="/bookings" element={<BookingPayment />} />
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/verify-email" element={<EmailVerification />} />

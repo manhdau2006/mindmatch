@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { Compass, Calendar, MessageSquare, User } from 'lucide-react';
 import './BottomNavigation.css';
 
@@ -11,6 +11,9 @@ const NAV_ITEMS = [
 ];
 
 export default function BottomNav() {
+    const location = useLocation();
+    const demoId = new URLSearchParams(location.search).get('as');
+    const demoSearch = import.meta.env.VITE_BOOKING_DEMO === 'true' && demoId ? `?as=${encodeURIComponent(demoId)}` : '';
     return (
         <nav className="bottom-nav">
             {NAV_ITEMS.map((item) => {
@@ -18,7 +21,7 @@ export default function BottomNav() {
                 return (
                     <NavLink
                         key={item.path}
-                        to={item.path}
+                        to={`${item.path}${demoSearch}`}
                         className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}
                     >
                         <Icon size={22} className="bottom-nav-icon" />

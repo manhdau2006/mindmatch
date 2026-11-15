@@ -8,7 +8,10 @@
     "start": "node index.js",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:seed:booking": "node prisma/seed-booking.js",
+    "test:booking": "node --test --test-concurrency=1 test/booking.test.js test/recurring.test.js",
+    "test:recurring": "node --test test/recurring.test.js"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +22,9 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
     "express": "^5.3.0",
-    "socket.io": "^4.8.4"
+    "firebase-admin": "^14.5.0",
+    "socket.io": "^4.8.4",
+    "stripe": "^23.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",

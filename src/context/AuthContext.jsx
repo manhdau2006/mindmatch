@@ -23,6 +23,10 @@ export const AuthProvider = ({ children }) => {
 
   // Lắng nghe thay đổi trạng thái xác thực từ Firebase Auth
   useEffect(() => {
+    if (import.meta.env.VITE_BOOKING_DEMO === 'true') {
+      setLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
 
